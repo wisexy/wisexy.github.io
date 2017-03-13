@@ -3,13 +3,28 @@
 <head>
   <meta charset="utf-8">
   
-  <title>ttt | Wisexy</title>
+  <title>JavaScript学习笔记：类型、值、变量 | Wisexy</title>
   <meta name="author" content="John Doe">
+  
+  <meta name="description" content="JavaScript中的类型
+数字
+字符串（char是长为1的字符串）
+布尔值
+null
+undefined
+对象（包括函数）
+
+算术运算中的注意点
+1/0 = Infinity（除0不报错）
+0/0 = NaN
+NaN不与任何值相等，包括自身
+Infinity/Infinity = NaN
+负数开">
   
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="ttt"/>
+  <meta property="og:title" content="JavaScript学习笔记：类型、值、变量"/>
   <meta property="og:site_name" content="Wisexy"/>
 
   
@@ -43,7 +58,7 @@
   <div class="container" id="container">
 	<div class="content">
 	  <div class="page-header">		
-  <h1><a class="brand" href="/">Wisexy</a><span class="split"></span><span class="title">ttt</span><span class="date" id="title-date"><i class="fa fa-clock-o"></i> 2017-02-04</span></h1>
+  <h1><a class="brand" href="/">Wisexy</a><span class="split"></span><span class="title">JavaScript学习笔记：类型、值、变量</span><span class="date" id="title-date"><i class="fa fa-clock-o"></i> 2017-03-13</span></h1>
 </div>		
 
 <div class="row page">
@@ -56,7 +71,33 @@
 	  
 
 	  <!-- content -->
-	  	  
+	  <h3 id="JavaScript中的类型"><a href="#JavaScript中的类型" class="headerlink" title="JavaScript中的类型"></a>JavaScript中的类型</h3><ol>
+<li>数字</li>
+<li>字符串（char是长为1的字符串）</li>
+<li>布尔值</li>
+<li>null</li>
+<li>undefined</li>
+<li>对象（包括函数）</li>
+</ol>
+<h3 id="算术运算中的注意点"><a href="#算术运算中的注意点" class="headerlink" title="算术运算中的注意点"></a>算术运算中的注意点</h3><ul>
+<li>1/0 = Infinity（除0不报错）</li>
+<li>0/0 = NaN</li>
+<li>NaN不与任何值相等，包括自身</li>
+<li>Infinity/Infinity = NaN</li>
+<li>负数开平方 = NaN</li>
+<li>+0 == -0 为真</li>
+<li>判断 NaN 和 Infinity 的好办法是 isNaN() 和 isFinite()</li>
+</ul>
+<h3 id="字符集"><a href="#字符集" class="headerlink" title="字符集"></a>字符集</h3><ol>
+<li>JavaScript采用UTF-16编码的Unicode字符集。</li>
+<li>不能表示为16位的Unicode字符用两个16位值组成的序列表示，称作“代理项对”。</li>
+<li>JavaScript定义的各种字符串操作方法均作用于16位值，而非字符，且不会对代理项做单独处理。</li>
+</ol>
+<h3 id="转义字符"><a href="#转义字符" class="headerlink" title="转义字符"></a>转义字符</h3><ul>
+<li>\xXX             由两位十六进制数XX制定的Latin-1字符</li>
+<li>\uXXXX         由4位十六进制数XXXX指定的Unicode字符</li>
+</ul>
+	  
 
 	  <div>
   		<center>
@@ -71,6 +112,8 @@
 		
 			
 			
+		
+	
 		
 	
 		
