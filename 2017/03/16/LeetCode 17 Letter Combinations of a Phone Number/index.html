@@ -1,0 +1,157 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>LeetCode 17. Letter Combinations of a Phone Number | Wisexy</title>
+  <meta name="author" content="John Doe">
+  
+  <meta name="description" content="题意Given a digit string, return all possible letter combinations that the number could represent.A mapping of digit to letters (just like on the teleph">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="LeetCode 17. Letter Combinations of a Phone Number"/>
+  <meta property="og:site_name" content="Wisexy"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  
+    <link rel="alternative" href="/atom.xml" title="Wisexy" type="application/atom+xml">
+  
+  
+    <link href="/favicon.png" rel="icon">
+  
+  
+  <link rel="stylesheet" href="/css/bootstrap.min.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">  
+  <link rel="stylesheet" href="/css/sidenav.css" media="screen" type="text/css">  
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+
+</head>
+
+<body id="body" data-spy="scroll" data-target=".toc">
+  <div class="container" id="container">
+	<div class="content">
+	  <div class="page-header">		
+  <h1><a class="brand" href="/">Wisexy</a><span class="split"></span><span class="title">LeetCode 17. Letter Combinations of a Phone Number</span><span class="date" id="title-date"><i class="fa fa-clock-o"></i> 2017-03-16</span></h1>
+</div>		
+
+<div class="row page">
+  <!-- cols -->	
+  
+  
+
+  
+	<div class="col-md-12">
+	  
+
+	  <!-- content -->
+	  <h3 id="题意"><a href="#题意" class="headerlink" title="题意"></a>题意</h3><p>Given a digit string, return all possible letter combinations that the number could represent.<br>A mapping of digit to letters (just like on the telephone buttons) is given below.</p>
+<pre><code>{2:&quot;abc&quot;, 3:&quot;def&quot;, 4:&quot;ghi&quot;, 5:&quot;jkl&quot;, 6:&quot;mno&quot;, 7:&quot;pqrs&quot;, 8:&quot;tuv&quot;, 9:&quot;wxyz&quot;}
+</code></pre><p>For example:</p>
+<pre><code>Input:Digit string &quot;23&quot;
+Output: [&quot;ad&quot;, &quot;ae&quot;, &quot;af&quot;, &quot;bd&quot;, &quot;be&quot;, &quot;bf&quot;, &quot;cd&quot;, &quot;ce&quot;, &quot;cf&quot;].
+</code></pre><p>输入一个由数字字符组成的字符串，求将这串数字作为输入时，“9键输入法”所能得到的所有情况。</p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>创建一个数组 vector<string> v，v[i] 代表第 i 个数所可能产生的字母集。再根据 v 用类似建立多叉树的方法得到每一个解。</string></p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Solution &#123;</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; bfs(<span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt;&amp; tree)</div><div class="line">    &#123;</div><div class="line">        <span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; ret;</div><div class="line">        <span class="built_in">queue</span>&lt;<span class="built_in">string</span>&gt; Q;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; (<span class="keyword">int</span>)tree[<span class="number">0</span>].size(); i++)</div><div class="line">        &#123;</div><div class="line">            <span class="function"><span class="built_in">string</span> <span class="title">str</span><span class="params">(<span class="number">1</span>,tree[<span class="number">0</span>][i])</span></span>;</div><div class="line">            Q.push(str);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">while</span>(!Q.empty())</div><div class="line">        &#123;</div><div class="line">            <span class="built_in">string</span> str = Q.front();</div><div class="line">            Q.pop();</div><div class="line">            <span class="keyword">int</span> len = str.length();</div><div class="line">            <span class="keyword">if</span>(len &lt; (<span class="keyword">int</span>)tree.size())</div><div class="line">            &#123;</div><div class="line">                <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; (<span class="keyword">int</span>)tree[len].size(); i++)</div><div class="line">                &#123;</div><div class="line">                    <span class="function"><span class="built_in">string</span> <span class="title">s</span><span class="params">(<span class="number">1</span>,tree[len][i])</span></span>;</div><div class="line">                    str.append(s);</div><div class="line">                    Q.push(str);</div><div class="line">                    str.erase(str.end()<span class="number">-1</span>);</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">else</span></div><div class="line">            &#123;</div><div class="line">                ret.push_back(str);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> ret;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; letterCombinations(<span class="built_in">string</span> digits)</div><div class="line">    &#123;</div><div class="line">        <span class="built_in">string</span> dct[] = &#123;<span class="string">""</span>, <span class="string">""</span>, <span class="string">"abc"</span>, <span class="string">"def"</span>, <span class="string">"ghi"</span>, <span class="string">"jkl"</span>, <span class="string">"nmo"</span>, <span class="string">"pqrs"</span>, <span class="string">"tuv"</span>, <span class="string">"wxyz"</span>&#125;;</div><div class="line">        <span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; tree;</div><div class="line">        <span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; ret;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span> ;i &lt; (<span class="keyword">int</span>)digits.size() ;i++)</div><div class="line">        &#123;</div><div class="line">            tree.push_back(dct[digits[i] - <span class="string">'0'</span>]);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(tree.size() &gt; <span class="number">0</span>)</div><div class="line">        &#123;</div><div class="line">            ret = bfs(tree);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> ret;</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+	  
+
+	  <div>
+  		<center>
+		  <div class="pagination">
+<ul class="pagination">
+	
+	
+	
+	
+	
+	
+		
+			
+			
+		
+	
+		
+			
+			
+			
+		
+			
+		
+	
+		
+	
+		
+			
+		
+	
+		
+	
+	
+	
+		<li class="prev disabled"><a><i class="fa fa-arrow-circle-o-left"></i>prev</a></li>
+	
+	<li><a href="/"><i class="fa fa-archive"></i>Home</a></li>
+	
+		<li class="next"><a href="/2017/03/15/LeetCode 16 3Sum Closest/" class="alignright next">next<i class="fa fa-arrow-circle-o-right"></i></a></li>
+	
+</ul>
+</div>
+
+		</center>
+	  </div>
+	  
+	</div> <!-- col-md-9/col-md-12 -->
+	
+  </div><!-- row -->
+
+	</div>
+  </div>
+  <div class="container-narrow">
+	<footer> <p>
+  &copy; 2017 John Doe
+  
+      with help from <a href="http://zespia.tw/hexo/" target="_blank">Hexo</a> and <a href="http://getbootstrap.com/" target="_blank">Twitter Bootstrap</a>. Theme by <a href="http://github.com/wzpan/hexo-theme-wixo/">Wixo</a>.    
+</p> </footer>
+  </div> <!-- container-narrow -->
+  
+<a id="gotop" href="#">   
+  <span>▲</span> 
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.tableofcontents.min.js"></script>
+<script src="/js/tocgenerator.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script> 
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+
+</body>
+</html>
