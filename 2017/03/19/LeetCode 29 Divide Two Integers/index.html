@@ -1,0 +1,184 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>LeetCode 29. Divide Two Integers | Wisexy</title>
+  <meta name="author" content="John Doe">
+  
+  <meta name="description" content="题意Divide two integers without using multiplication, division and mod operator.If it is overflow, return MAX_INT.不使用乘法、除法、取余操作计算两个数的商，若溢出，返回 MAX_INT。
+思">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="LeetCode 29. Divide Two Integers"/>
+  <meta property="og:site_name" content="Wisexy"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  
+    <link rel="alternative" href="/atom.xml" title="Wisexy" type="application/atom+xml">
+  
+  
+    <link href="/favicon.png" rel="icon">
+  
+  
+  <link rel="stylesheet" href="/css/bootstrap.min.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">  
+  <link rel="stylesheet" href="/css/sidenav.css" media="screen" type="text/css">  
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+
+</head>
+
+<body id="body" data-spy="scroll" data-target=".toc">
+  <div class="container" id="container">
+	<div class="content">
+	  <div class="page-header">		
+  <h1><a class="brand" href="/">Wisexy</a><span class="split"></span><span class="title">LeetCode 29. Divide Two Integers</span><span class="date" id="title-date"><i class="fa fa-clock-o"></i> 2017-03-19</span></h1>
+</div>		
+
+<div class="row page">
+  <!-- cols -->	
+  
+  
+
+  
+	<div class="col-md-12">
+	  
+
+	  <!-- content -->
+	  <h3 id="题意"><a href="#题意" class="headerlink" title="题意"></a>题意</h3><p>Divide two integers without using multiplication, division and mod operator.<br>If it is overflow, return MAX_INT.<br>不使用乘法、除法、取余操作计算两个数的商，若溢出，返回 MAX_INT。</p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>被除数记为 x ，除数记为 y：<br>若将除数 y 左移 n 次后可得到不大于除数的最大的数，也即 y × (2<sup>n</sup>) 是不大于除数的最大的数，这时，已经计算出了原被除数中至少可以减 2<sup>n</sup> 个除数，x - y × (2<sup>n</sup>) 是被除数余下的部分，只要继续计算余下的部分并记录减去除数的 y 的个数，直到余下的部分小于 y 。<br>以1003 / 7为例：</p>
+<ol>
+<li>1003 - 7 × 2<sup>7</sup> = 1003 - 896 = 107 （896 × 2 &gt; 1003，所以 896 是除数移位后最大的不大于被除数 1003 的数），一共移位了 7 次，减去2<sup>7</sup> = 128 个除数。</li>
+<li>107 - 7 × 2<sup>3</sup> = 107 - 56 = 51，移位 3 次，减去了 8 个除数。</li>
+<li>51 - 7 × 2<sup>2</sup> = 51 - 28 = 23，移位 2 次，减去了 4 个除数。</li>
+<li>23 - 7 × 2<sup>1</sup> = 23 - 14 = 9，移位 1 次，减去了 2 个除数。</li>
+<li>9 - 7 × 2<sup>0</sup> = 9 - 7 = 2，移位 0 次，减去了 1 个除数。</li>
+<li>2 &lt; 7，算法结束。</li>
+</ol>
+<p>得到1003 / 7 的运算结果为 128 + 8 + 4 + 2 + 1= 143。</p>
+<p>事实上，最终得到的商在计算机内部是一定长度的连续的二进制位，这种算法就可以理解为由高位到低位逐一试探出商的一个二进制位，是快速幂<a href="https://wisexy.github.io/2017/03/13/LeetCode%2050%20Pow-x-n/" target="_blank" rel="external">[LeetCode 50. Pow(x,n)]</a>的应用。<br>又从二进制位的角度来观察该算法：（只看低16位，高位全0）</p>
+<ol>
+<li>00000000 00000001 移位 7 次得到 00000000 10000000，即 1003 - 7 × 2<sup>7</sup> = 1000 - 896 = 107。</li>
+<li>00000000 00000001 移位 3 次得到 00000000 00001000，即   107 - 7 × 2<sup>3</sup> =   104   - 56 =   51。</li>
+<li>00000000 00000001 移位 2 次得到 00000000 00000100，即     51 - 7 × 2<sup>2</sup> =   51     - 28 =   23。</li>
+<li>00000000 00000001 移位 1 次得到 00000000 00000010，即     23 - 7 × 2<sup>1</sup> =   23     - 14 =     9。</li>
+<li>00000000 00000001 移位 1 次得到 00000000 00000001，即       9 - 7 × 2<sup>0</sup> =   9         - 7 =     2。</li>
+<li>2 &lt; 7，算法终止。</li>
+</ol>
+<p>得到 1000 / 7 的运算结果为：00000000 10000000 | 00000000 00001000 | 00000000 00000100 | 00000000 00000010 | 00000000 00000001 = 00000000 10001111，化为十进制为 143。</p>
+<h3 id="需要注意的地方"><a href="#需要注意的地方" class="headerlink" title="需要注意的地方"></a>需要注意的地方</h3><p>计算机中整数用补码表示，对于一个32位的 int 类型，最小的数是 0x80000000 = -2147483648，最大的数是 0x7FFFFFFF = 2147483647，问题来了，负数比正数多一个，那么 -2147483648 / -1  = 2147483647，超过了计算机所能表示的正数的最大值，类似地，- (-2147483648)也无法得到正确结果。<br>程序可以使用64位整数处理所有中间过程，最后再判断输出结果是否得到了 0x80000000 这个值（事实上，当且仅当 0x80000000 / -1 会出现溢出的情况），若是，题目要求输出 INT_MAX = 0x7FFFFFFF。</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">divide</span><span class="params">(<span class="keyword">int</span> dividend, <span class="keyword">int</span> divisor)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">long</span> <span class="keyword">long</span> divd = dividend, divs = divisor;</div><div class="line">    <span class="keyword">bool</span> nag = <span class="literal">false</span>;</div><div class="line">    <span class="keyword">if</span>((divd &lt; <span class="number">0</span> &amp;&amp; divs &gt; <span class="number">0</span>) || (divd &gt; <span class="number">0</span> &amp;&amp; divs &lt; <span class="number">0</span>))</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span>(divd &lt; <span class="number">0</span>) divd = -divd;</div><div class="line">        <span class="keyword">if</span>(divs &lt; <span class="number">0</span>) divs = -divs;</div><div class="line">        nag = <span class="literal">true</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span>(divd &lt; <span class="number">0</span> &amp;&amp; divs &lt; <span class="number">0</span>)</div><div class="line">    &#123;</div><div class="line">        divd = -divd;</div><div class="line">        divs = -divs;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">long</span> <span class="keyword">long</span> ret = <span class="number">0</span>;</div><div class="line">    <span class="keyword">while</span>(divd &gt;= divs)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">long</span> <span class="keyword">long</span> t = divs;</div><div class="line">        <span class="keyword">long</span> <span class="keyword">long</span> i = <span class="number">1</span>;</div><div class="line">        <span class="keyword">while</span>(<span class="literal">true</span>)</div><div class="line">        &#123;</div><div class="line">            <span class="keyword">if</span>(t &gt; divd)</div><div class="line">            &#123;</div><div class="line">                t &gt;&gt;= <span class="number">1</span>;</div><div class="line">                i &gt;&gt;= <span class="number">1</span>;</div><div class="line">                ret += i;</div><div class="line">                divd -= t;</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            &#125;</div><div class="line">            t &lt;&lt;= <span class="number">1</span>;</div><div class="line">            i &lt;&lt;= <span class="number">1</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span>(nag) ret = -ret;</div><div class="line">    <span class="keyword">if</span>(ret&lt;INT_MIN || ret&gt;INT_MAX) <span class="keyword">return</span> <span class="number">0x7fffffff</span>;</div><div class="line">    <span class="keyword">return</span> (<span class="keyword">int</span>)ret;</div><div class="line">&#125;</div></pre></td></tr></table></figure>	  
+
+	  <div>
+  		<center>
+		  <div class="pagination">
+<ul class="pagination">
+	
+	
+	
+	
+	
+	
+		
+			
+			
+		
+	
+		
+			
+			
+			
+		
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+	
+		
+			
+		
+	
+		
+	
+	
+	
+		<li class="prev disabled"><a><i class="fa fa-arrow-circle-o-left"></i>prev</a></li>
+	
+	<li><a href="/"><i class="fa fa-archive"></i>Home</a></li>
+	
+		<li class="next"><a href="/2017/03/17/LeetCode 206 Reverse Linked List/" class="alignright next">next<i class="fa fa-arrow-circle-o-right"></i></a></li>
+	
+</ul>
+</div>
+
+		</center>
+	  </div>
+	  
+	</div> <!-- col-md-9/col-md-12 -->
+	
+  </div><!-- row -->
+
+	</div>
+  </div>
+  <div class="container-narrow">
+	<footer> <p>
+  &copy; 2017 John Doe
+  
+      with help from <a href="http://zespia.tw/hexo/" target="_blank">Hexo</a> and <a href="http://getbootstrap.com/" target="_blank">Twitter Bootstrap</a>. Theme by <a href="http://github.com/wzpan/hexo-theme-wixo/">Wixo</a>.    
+</p> </footer>
+  </div> <!-- container-narrow -->
+  
+<a id="gotop" href="#">   
+  <span>▲</span> 
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.tableofcontents.min.js"></script>
+<script src="/js/tocgenerator.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script> 
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+
+</body>
+</html>
