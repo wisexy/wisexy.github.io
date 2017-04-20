@@ -1,0 +1,183 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>LeetCode 153. Find Minimum in Rotated Sorted Array | Wisexy</title>
+  <meta name="author" content="John Doe">
+  
+  <meta name="description" content="题意Suppose an array sorted in ascending order is rotated at some pivot unknown to you beforehand.(i.e., 0 1 2 4 5 6 7 might become 4 5 6 7 0 1 2).Find ">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="LeetCode 153. Find Minimum in Rotated Sorted Array"/>
+  <meta property="og:site_name" content="Wisexy"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  
+    <link rel="alternative" href="/atom.xml" title="Wisexy" type="application/atom+xml">
+  
+  
+    <link href="/favicon.png" rel="icon">
+  
+  
+  <link rel="stylesheet" href="/css/bootstrap.min.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">  
+  <link rel="stylesheet" href="/css/sidenav.css" media="screen" type="text/css">  
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+
+</head>
+
+<body id="body" data-spy="scroll" data-target=".toc">
+  <div class="container" id="container">
+	<div class="content">
+	  <div class="page-header">		
+  <h1><a class="brand" href="/">Wisexy</a><span class="split"></span><span class="title">LeetCode 153. Find Minimum in Rotated Sorted Array</span><span class="date" id="title-date"><i class="fa fa-clock-o"></i> 2017-04-20</span></h1>
+</div>		
+
+<div class="row page">
+  <!-- cols -->	
+  
+  
+
+  
+	<div class="col-md-12">
+	  
+
+	  <!-- content -->
+	  <h3 id="题意"><a href="#题意" class="headerlink" title="题意"></a>题意</h3><p>Suppose an array sorted in ascending order is rotated at some pivot unknown to you beforehand.<br>(i.e., 0 1 2 4 5 6 7 might become 4 5 6 7 0 1 2).<br>Find the minimum element.<br>You may assume no duplicate exists in the array.</p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>由于数列严格递增，找最小数的问题就转化为了找一个连续的数对[a,b]的问题，[a,b]满足条件a&gt;b。<br>这样一来就可以使用二分搜索找这个数对，较传统的二分搜索，将left&lt;right的条件改为left&lt;right+1，例如在[8,9,1,2,3,4,5]的数列上搜索（最终目标是要找到数对[9,1]的位置）：<br>对于数对[a,b]：</p>
+<pre><code>1.若a&lt;5说明应该往数列的左边继续找
+2.若b&gt;8说明应该往数列的右边继续找
+3.若a&gt;b则说明找到了目标数对
+4.若left=right-1，且a&lt;b说明数列单调递增，返回-1，以区分正常结果
+</code></pre><h3 id="需要注意的地方"><a href="#需要注意的地方" class="headerlink" title="需要注意的地方"></a>需要注意的地方</h3><p>1.由于要搜索的是一个长度为2的数对，为了防止访问越界，当涉及nums[i+1]时，二分搜索区间[left,right]应该修正为[left,right-1]；当涉及nums[i-1]时，二分搜索区间[left,right]应该修正为[left+1,right]。<br>2.若搜索区间是[left+1,right]则忽略了形如[6,1,2,3,4,5]的情况；若搜索区间是[left,right-1]则忽略了形如[4,5,6,7,8,1]的情况。需要根据二分搜索函数的写法在函数开头单独判断。</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">class</span> Solution &#123;</div><div class="line"><span class="keyword">public</span>:</div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">binsearch</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span>(nums[<span class="number">0</span>] &gt; nums[<span class="number">1</span>]) <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line">        <span class="keyword">int</span> l = left, r = right, m = (l + r) / <span class="number">2</span>;</div><div class="line">        <span class="keyword">while</span>(r - l &gt; <span class="number">1</span>)</div><div class="line">        &#123;</div><div class="line">            m = (l + r) / <span class="number">2</span>;</div><div class="line">            <span class="keyword">if</span>(nums[m - <span class="number">1</span>] &lt; nums[nums.size() - <span class="number">1</span>])</div><div class="line">            &#123;</div><div class="line">                r = m;</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span>(nums[m] &gt; nums[<span class="number">0</span>])</div><div class="line">            &#123;</div><div class="line">                l = m;</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span>(nums[m - <span class="number">1</span>] &gt; nums[m]) <span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(nums[m - <span class="number">1</span>] &gt; nums[m]) <span class="keyword">return</span> m;</div><div class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">findMin</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span>(nums.size() &lt;= <span class="number">1</span>) <span class="keyword">return</span> nums[<span class="number">0</span>];</div><div class="line">        <span class="keyword">int</span> p = binsearch(nums, <span class="number">1</span>, nums.size());</div><div class="line">        <span class="keyword">return</span> p != <span class="number">-1</span> ? nums[p] : nums[<span class="number">0</span>];</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+	  
+
+	  <div>
+  		<center>
+		  <div class="pagination">
+<ul class="pagination">
+	
+	
+	
+	
+	
+	
+		
+			
+			
+		
+	
+		
+			
+			
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+	
+		
+			
+		
+	
+		
+			
+		
+	
+		
+	
+	
+	
+		<li class="prev disabled"><a><i class="fa fa-arrow-circle-o-left"></i>prev</a></li>
+	
+	<li><a href="/"><i class="fa fa-archive"></i>Home</a></li>
+	
+		<li class="next"><a href="/2017/03/21/LeetCode 78 Subsets/" class="alignright next">next<i class="fa fa-arrow-circle-o-right"></i></a></li>
+	
+</ul>
+</div>
+
+		</center>
+	  </div>
+	  
+	</div> <!-- col-md-9/col-md-12 -->
+	
+  </div><!-- row -->
+
+	</div>
+  </div>
+  <div class="container-narrow">
+	<footer> <p>
+  &copy; 2017 John Doe
+  
+      with help from <a href="http://zespia.tw/hexo/" target="_blank">Hexo</a> and <a href="http://getbootstrap.com/" target="_blank">Twitter Bootstrap</a>. Theme by <a href="http://github.com/wzpan/hexo-theme-wixo/">Wixo</a>.    
+</p> </footer>
+  </div> <!-- container-narrow -->
+  
+<a id="gotop" href="#">   
+  <span>▲</span> 
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.tableofcontents.min.js"></script>
+<script src="/js/tocgenerator.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script> 
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+
+</body>
+</html>
