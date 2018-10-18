@@ -1,0 +1,326 @@
+<!DOCTYPE html><html lang="null"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description"><title>《RFC6388》部分理解翻译 | Apocalyptica</title><link rel="stylesheet" type="text/css" href="//fonts.css.network/css?family=Source+Code+Pro"><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.3.0"><link rel="stylesheet" type="text/css" href="/css/highlight.css?v=1.3.0"><link rel="Shortcut Icon" href="/favicon.ico"><link rel="bookmark" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">《RFC6388》部分理解翻译</h1><a id="logo" href="/.">Apocalyptica</a><p class="description"></p></div><div id="nav-menu"><a href="/." class="current"><i class="fa fa-home"> Start</i></a><a href="/archives/"><i class="fa fa-archive"> Archiv</i></a><a href="/about/"><i class="fa fa-user"> Über</i></a><a href="/atom.xml"><i class="fa fa-rss"> RSS</i></a></div></div><div id="layout" class="layout-g"><div class="layout-l"><div class="content_container"><div class="post"><h1 class="post-title">《RFC6388》部分理解翻译</h1><div class="post-meta">Oct 14, 2018<span> | </span><span class="category"><a href="/categories/MP2MP/">MP2MP</a></span><script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> Hits</span></span></div><div class="post-content"><h2 id="3-Setting-up-MP2MP-LSPs-with-LDP"><a href="#3-Setting-up-MP2MP-LSPs-with-LDP" class="headerlink" title="3. Setting up MP2MP LSPs with LDP"></a>3. Setting up MP2MP LSPs with LDP</h2><p>An MP2MP LSP is much like a P2MP LSP in that it consists of a single root node, zero or more transit nodes, and one or more Leaf LSRs acting equally an as Ingress or Egress LSR.</p>
+<blockquote>
+<p><strong>一个MP2MP LSP的组成</strong>：有且仅有1个Root，[0 - n]个Transit，[1 - n]个Leaf。</p>
+</blockquote>
+<p>A leaf node participates in the setup of an MP2MP LSP by establishing both a downstream LSP, which is much like a P2MP LSP from the root, and an upstream LSP, which is used to send traffic toward the root and other leaf nodes. Transit nodes support the setup by propagating the upstream and downstream LSP setup toward the root and installing the necessary MPLS forwarding state.</p>
+<blockquote>
+<p><strong>Leaf和Transit在建立MP2MP LSP时发挥的作用</strong>：Leaf通过建立downstream LSP（流量从Root向下的LSP）和upstream LSP（流量从Leaf向根或其它Leaf的LSP）的方式参与MP2MP LSP的建立。Transit则通过传递上下游发起的建立来生成必要的MPLS转发状态。</p>
+</blockquote>
+<p>The transmission of packets from the root node of an MP2MP LSP to the receivers is identical to that for a P2MP LSP. Traffic from a downstream node follows the upstream LSP toward the root node and branches downward along the downstream LSP as required to reach other leaf nodes. A packet that is received from a downstream node MUST never be forwarded back out to that same node. Mapping traffic to the MP2MP LSP may happen at any leaf node. How that mapping is established is outside the scope of this document.</p>
+<blockquote>
+<p><strong>流量如何转发</strong>：由上至下的流量（从Root发送到receivers）方式与P2MP中一致。而从下游来的流量则沿着u pstream LSP向根转发的同时也通过downstream LSP向其它下游的分支转发（如果该节点上存在其它downstream LSP的话）。</p>
+<p><strong>防止收到自己的packet</strong>：一个从下游收到的packet<strong>决不能</strong>发回到那个下游去。</p>
+<p><strong>Leaf是MP2MP LSP域的流量出入口</strong>：任何Leaf节点都可能发生流量映射，如何建立映射不再本文讨论范围。</p>
+</blockquote>
+<p>Due to how an MP2MP LSP is built, a Leaf LSR that is sending packets on the MP2MP LSP does not receive its own packets. There is also no additional mechanism needed on the root or Transit LSR to match upstream traffic to the downstream forwarding state. Packets that are forwarded over an MP2MP LSP will not traverse a link more than once, with the possible exception of LAN links (see Section 3.3.1), if the procedures of [RFC5331] are not provided.</p>
+<blockquote>
+<p>由于MP2MP LSP建立的方式，向上游发packets的Leaf不会收到它自己发的packets，因此Root和Transit也不需要额外的机制来比较上游流量和下游转发状态。</p>
+<p>MP2MP LSP上的packets不会经过一个节点两次，可能的例外是Section 3.3.1提及的LAN links。</p>
+</blockquote>
+<h3 id="3-1-Support-for-MP2MP-LSP-Setup-with-LDP"><a href="#3-1-Support-for-MP2MP-LSP-Setup-with-LDP" class="headerlink" title="3.1. Support for MP2MP LSP Setup with LDP"></a>3.1. Support for MP2MP LSP Setup with LDP</h3><p>Support for the setup of MP2MP LSPs is advertised using LDP capabilities as defined in [RFC5561]. An implementation supporting the MP2MP procedures specified in this document MUST implement the procedures for Capability Parameters in Initialization messages.</p>
+<blockquote>
+<p>MP2MP LSPs 是使用LDP能力来建立的。本文档规定的MP2MP procedures的实现的前提是必须实现在初始化消息中协商能力参数的procedures。</p>
+</blockquote>
+<p>A new Capability Parameter TLV is defined, the MP2MP Capability. Following is the format of the MP2MP Capability Parameter.</p>
+<blockquote>
+<p>为MP2MP定义了新的能力参数TLV。</p>
+</blockquote>
+<p>The MP2MP Capability TLV MUST be advertised in the LDP Initialization message. Advertisement of the MP2MP Capability indicates support of the procedures for MP2MP LSP setup detailed in this document. If the peer has not advertised the corresponding capability, then label messages using the MP2MP upstream and downstream FEC Elements SHOULD NOT be sent to the peer.</p>
+<blockquote>
+<p>MP2MP能力TLV必须在LDP初始化消息中通知，如果没有通知相应的能力，就不应该向其它节点发送MP2MP Label Message。</p>
+</blockquote>
+<h3 id="3-2-The-MP2MP-Downstream-and-Upstream-FEC-Elements"><a href="#3-2-The-MP2MP-Downstream-and-Upstream-FEC-Elements" class="headerlink" title="3.2. The MP2MP Downstream and Upstream FEC Elements"></a>3.2. The MP2MP Downstream and Upstream FEC Elements</h3><p>For the setup of an MP2MP LSP with LDP, we define 2 new protocol entities, the MP2MP downstream FEC and upstream FEC Element. Both elements will be used as FEC Elements in the FEC TLV. Note that the MP2MP FEC Elements do not necessarily identify the traffic that must be mapped to the LSP, so from that point of view, the use of the term FEC is a misnomer. The description of the MP2MP FEC Elements follow.</p>
+<blockquote>
+<p>为了通过LDP建立MP2MP LSP，定义了2种新的protocol entity：MP2MP downstream FEC Element和MP2MP upstream FEC Element，这两种entity都在FEC TLV中作FEC Element。注意，MP2MP FEC Elements [???]，所以从这个角度说，用“FEC”这个术语是有些用词不当。</p>
+</blockquote>
+<p>The structure, encoding, and error handling for the MP2MP downstream and upstream FEC Elements are the same as for the P2MP FEC Element described in Section 2.2. The difference is that two new FEC types are used: MP2MP downstream type (0x08) and MP2MP upstream type (0x07).</p>
+<blockquote>
+<p>有关MP2MP downstream FEC Element和MP2MP upstream FEC Element的结构、编码、差错处理与Section 2.2中描述的P2MP FEC Element相同。唯一的差别是type字段用了新的编号：MP2MP downstream为（0x08）MP2MP upstream为（0x07）。</p>
+</blockquote>
+<p>If a FEC TLV contains an MP2MP FEC Element, the MP2MP FEC Element MUST be the only FEC Element in the FEC TLV.</p>
+<blockquote>
+<p><strong>单个FEC TLV中FEC Element的唯一性</strong>：如果一个FEC TLV中包含有一个MP2MP FEC Element，那么该MP2MP FEC Element必须是这个FEC TLV中唯一的FEC Element。</p>
+</blockquote>
+<p>Note, except when using the procedures of [RFC5331], the MPLS labels used are “downstream-assigned” [RFC5332], even if they are bound to the “upstream FEC Element”.</p>
+<blockquote>
+<p>注意：除非使用了【RFC5331】中的步骤，MPLS标签是“下游分配”的，即使他们受到“upstream FEC Element”的约束。</p>
+</blockquote>
+<h3 id="3-3-Using-the-MP2MP-FEC-Elements"><a href="#3-3-Using-the-MP2MP-FEC-Elements" class="headerlink" title="3.3. Using the MP2MP FEC Elements"></a>3.3. Using the MP2MP FEC Elements</h3><p>This section defines the rules for the processing and propagation of the MP2MP FEC Elements. The following notation is used in the processing rules:</p>
+<ol>
+<li><p>MP2MP downstream LSP (or simply downstream ): an MP2MP LSP downstream path with root node address X and opaque value Y.</p>
+<blockquote>
+<p><strong>downstream</strong> ：流量向下的LSP（带有信息：root IP = X, opaque value = Y）</p>
+</blockquote>
+</li>
+<li><p>MP2MP upstream LSP (or simply upstream ): an MP2MP LSP upstream path for downstream node D with root node address X and opaque value Y.</p>
+<blockquote>
+<p><strong>upstream</strong> ：为下游D建立的流量向上的LSP（带有信息：root IP = X, opaque value = Y）</p>
+</blockquote>
+</li>
+<li><p>MP2MP downstream FEC Element : a FEC Element with root node address X and opaque value Y used for a downstream MP2MP LSP.</p>
+</li>
+<li><p>MP2MP upstream FEC Element : a FEC Element with root node address X and opaque value Y used for an upstream MP2MP LSP.</p>
+<blockquote>
+<p><strong>MP2MP downstream(upstream) FEC Element</strong> ：用于建立upstream MP2MP LSP的FEC Element（带有信息：root IP = X, opaque value = Y）</p>
+</blockquote>
+</li>
+<li><p>MP2MP-D Label Mapping : a Label Mapping message with a FEC TLV with a single MP2MP downstream FEC Element and label TLV with label L. Label L MUST be allocated from the per-platform label space (see [RFC3031], Section 3.14) of the LSR sending the Label Mapping message. The use of the interface label space is outside the scope of this document.</p>
+</li>
+<li><p>MP2MP-U Label Mapping : a Label Mapping message with a FEC TLV with a single MP2MP upstream FEC Element and label TLV with label Lu. Label Lu MUST be allocated from the per-platform label space (see [RFC3031], Section 3.14) of the LSR sending the Label Mapping message. The use of the interface label space is outside the scope of this document.</p>
+<blockquote>
+<p><strong>MP2MP-D(MP2MP-U) Label Mapping</strong> ：带有FEC TLV的标签影射消息，其中FEC TLV中带有一个MP2MP downstream(upstream) FEC Element ，Label TLV中带有标签L(Lu)。其中L(Lu)分配自各平台的标签命名空间。</p>
+</blockquote>
+</li>
+<li><p>MP2MP-D Label Withdraw : a Label Withdraw message with a FEC TLV with a single MP2MP downstream FEC Element and label TLV with label L.</p>
+</li>
+<li><p>MP2MP-U Label Withdraw : a Label Withdraw message with a FEC TLV with a single MP2MP upstream FEC Element and label TLV with label Lu.</p>
+<blockquote>
+<p><strong>MP2MP-D(MP2MP-U) Label Withdraw</strong> ：带有FEC TLV的标签撤回消息，其中FEC TLV中带有一个MP2MP downstream(upstream) FEC Element ，Label TLV中带有标签L(Lu)。</p>
+</blockquote>
+</li>
+<li><p>MP2MP-D Label Release : a Label Release message with a FEC TLV with a single MP2MP downstream FEC Element and Label TLV with label L.</p>
+</li>
+<li><p>MP2MP-U Label Release : a Label Release message with a FEC TLV with a single MP2MP upstream FEC Element and label TLV with label Lu.</p>
+<blockquote>
+<p><strong>MP2MP-D Label Release</strong> ：带有FEC TLV的标签释放消息，其中FEC TLV中带有一个MP2MP downstream(upstream) FEC Element ，Label TLV中带有标签L(Lu)。</p>
+</blockquote>
+</li>
+</ol>
+<p>The procedures below are organized by the role which the node plays in the MP2MP LSP. Node Z knows that it is a leaf node by a discovery process that is outside the scope of this document. During the course of the protocol operation, the root node recognizes its role because it owns the root node address. A transit node is any node (other then the root node) that receives an MP2MP Label Mapping message (i.e., one that has leaf nodes downstream of it).</p>
+<blockquote>
+<p><strong>关于一个节点如何确定自身的角色是Root还是Transit还是Leaf</strong>：Leaf节点的发现方式超出了本文范围（事实上多为上层业务触发或人为静态配置）。而Root和Transit节点则根据收到MP2MP-D(MP2MP-U) Label Mapping 消息中的IP与自己的IP是否相同来判断：若相同，则知道自己是对应于该LSP的Root，不同则为Transit。</p>
+</blockquote>
+<p>Note that a transit node (and indeed the root node) may also be a leaf node and the root node does not have to be an Ingress LSR or a leaf of the MP2MP LSP.</p>
+<blockquote>
+<p>注意1：某节点可能即使Transit也是Leaf（这种节点被称作Bud节点）。</p>
+<p>注意2：在MP2MP LSP中Root节点不一定是Ingress或Leaf（Ingress：流量从MP2MP域外流入域内的入口）。</p>
+</blockquote>
+<h4 id="3-3-1-MP2MP-Label-Mapping"><a href="#3-3-1-MP2MP-Label-Mapping" class="headerlink" title="3.3.1. MP2MP Label Mapping"></a>3.3.1. MP2MP Label Mapping</h4><p>The remainder of this section specifies the procedures for originating MP2MP Label Mapping messages and for processing received MP2MP Label Mapping messages for a particular LSP. The procedures for a particular LSR depend upon the role that the LSR plays in the LSP (Ingress, Transit, or Egress).<br>All labels discussed here are downstream-assigned [RFC5332] except those that are assigned using the procedures of Section 6.</p>
+<blockquote>
+<p>余下的部分规定有关标签映射消息（MP2MP Label Mapping messages）收发处理的步骤。这些特定的步骤取决于节点在LSP中的角色。</p>
+</blockquote>
+<h5 id="3-3-1-1-Determining-one’s-upstream-MP2MP-LSR"><a href="#3-3-1-1-Determining-one’s-upstream-MP2MP-LSR" class="headerlink" title="3.3.1.1. Determining one’s upstream MP2MP LSR"></a>3.3.1.1. Determining one’s upstream MP2MP LSR</h5><p>Determining the upstream LDP peer U for an MP2MP LSP follows the procedure for a P2MP LSP described in Section 2.4.1.1.</p>
+<blockquote>
+<p>对于MP2MP LSP 而言的的上游节点U的决定方式与P2MP LSP相同，见Section 2.4.1.1.</p>
+</blockquote>
+<h5 id="3-3-1-2-Determining-One’s-Downstream-MP2MP-LSR"><a href="#3-3-1-2-Determining-One’s-Downstream-MP2MP-LSR" class="headerlink" title="3.3.1.2. Determining One’s Downstream MP2MP LSR"></a>3.3.1.2. Determining One’s Downstream MP2MP LSR</h5><p>An LDP peer U that receives an MP2MP-D Label Mapping from an LDP peer D will treat D as downstream MP2MP LSR.</p>
+<blockquote>
+<p>若当前节点U收到来自节点D的MP2MP-D Label Mapping，则将D视作是自己的下游。</p>
+</blockquote>
+<h5 id="3-3-1-3-Installing-the-Upstream-Path-of-an-MP2MP-LSP"><a href="#3-3-1-3-Installing-the-Upstream-Path-of-an-MP2MP-LSP" class="headerlink" title="3.3.1.3. Installing the Upstream Path of an MP2MP LSP"></a>3.3.1.3. Installing the Upstream Path of an MP2MP LSP</h5><p>There are two methods for installing the upstream path of an MP2MP LSP to a downstream neighbor.</p>
+<ol>
+<li>We can install the upstream MP2MP path (to a downstream neighbor) based on receiving an MP2MP-D Label Mapping from the downstream neighbor. This will install the upstream path on a hop-by-hop basis.</li>
+<li>We install the upstream MP2MP path (to a downstream neighbor) based on receiving an MP2MP-U Label Mapping from the upstream neighbor. An LSR does not need to wait for the MP2MP-U Label Mapping if it is the root of the MP2MP LSP or if it already received an MP2MP-U Label Mapping from the upstream neighbor. We call this method ordered mode. The typical result of this mode is that the downstream path of the MP2MP is built hop by hop towards the root. Once the root is reached, the root node will trigger an MP2MP-U Label Mapping to the downstream neighbor(s).</li>
+</ol>
+<blockquote>
+<p>对于下游节点来说，有两种方法建立upstream LSP：</p>
+<p>方法1.通过接收从下游邻居发来的MP2MP-D Label Mapping建立上游路径。</p>
+<p>方法2.通过接收从上游邻居发来的MP2MP-U Label Mapping。但如果节点为Root角色或已经从上游收到过MP2MP-U Label Mapping，则不需要等待。这种方式称为“Ordered Mode”。这种模式下典型的结果是：由下游向上游一跳一跳地建立downstream LSP，一旦到达Root节点，Root节点向下游邻居们发送MP2MP-U Label Mapping。</p>
+</blockquote>
+<p>For setting up the upstream path of an MP2MP LSP, ordered mode SHOULD be used. Due to ordered mode, the upstream path of the MP2MP LSP is installed at the leaf node once the path to the root has completed. The advantage is that when a leaf starts sending immediately after the upstream path is installed, packets are able to reach the root node without being dropped due to an incomplete LSP. Method 1 is not able to guarantee that the upstream path has completed before the leaf starts sending.</p>
+<blockquote>
+<p>建立上游路径应该使用“Ordered Mode”。优点当上游路径建立好时Leaf节点可以立即发送流量，且packets能到达Root不会因LSP未完成而被丢弃。方法1无法保证上游路径在Leaf发送流量前建立完成。</p>
+</blockquote>
+<h5 id="3-3-1-4-MP2MP-Leaf-Node-Operation"><a href="#3-3-1-4-MP2MP-Leaf-Node-Operation" class="headerlink" title="3.3.1.4. MP2MP Leaf Node Operation"></a>3.3.1.4. MP2MP Leaf Node Operation</h5><p>A leaf node Z of an MP2MP LSP determines its upstream LSR U for as per Section 3.3.1.1, allocates a label L, and sends an MP2MP-D Label Mapping to U.</p>
+<blockquote>
+<p>Leaf节点Z通过Section 3.3.1.1中的方法确定出节点U作为上游，然后分配标签L向上游U发送MP2MP-D Label Mapping 。</p>
+</blockquote>
+<p>Leaf node Z expects an MP2MP-U Label Mapping from node U in response to the MP2MP-D Label Mapping it sent to node U. Z checks whether it already has forwarding state for upstream . If not, Z creates forwarding state to push label Lu onto the traffic that Z wants to forward over the MP2MP LSP. How it determines what traffic to forward on this MP2MP LSP is outside the scope of this document.</p>
+<blockquote>
+<p>作为发送MP2MP-D Label Mapping 的回应，Leaf节点Z等待U发送的MP2MP-U Label Mapping 。Z检查是否已经建好（upstream 的）上游。如果没有，Z建立相应转发状态为了之后给想要进入MP2MP域的流量push标签。确定要发送的内容的方式超出了本文的范围。</p>
+</blockquote>
+<h5 id="3-3-1-5-MP2MP-Transit-Node-Operation"><a href="#3-3-1-5-MP2MP-Transit-Node-Operation" class="headerlink" title="3.3.1.5. MP2MP Transit Node Operation"></a>3.3.1.5. MP2MP Transit Node Operation</h5><p>Suppose node Z receives an MP2MP-D Label Mapping from LSR D. Z checks whether it has forwarding state for downstream . If not, Z determines its upstream LSR U foras per Section 3.3.1.1. Using this Label Mapping to update the label forwarding table MUST NOT be done as long as LSR D is equal to LSR U. If LSR U is different from LSR D, Z will allocate a label L’ and install downstream forwarding state to swap label L’ with label L over interface I associated with LSR D and send an MP2MP-D Label Mapping <x, y,="" l’=""> to U. Interface I is determined via the procedures in Section 2.4.1.2.</x,></p>
+<blockquote>
+<p>假如Z收到了来自节点D的MP2MP-D Label Mapping 。</p>
+<p>如果Z没有建好下游转发状态：Z通过Section 3.3.1.1.中定义的方法选出上游节点U，Z建立下游转发状态，并分配标签L’向上游U发送MP2MP-D Label Mapping <x, y,="" l’="">。</x,></p>
+</blockquote>
+<p>If Z already has forwarding state for downstream , all that Z needs to do in this case is check that LSR D is not equal to the upstream LSR of and update its forwarding state. Assuming its old forwarding state was L’-&gt; { …, }, its new forwarding state becomes L’-&gt; { …, , }. If the LSR D is equal to the installed upstream LSR, the Label Mapping from LSR D MUST be retained and MUST NOT update the label forwarding table.</p>
+<blockquote>
+<p>如果Z已经建好下游转发状态：那么如果新的下游D与当前上游U不相等则更新下游转发状态（在转发表中加入表示去往新下游D标签交换路径）。</p>
+<p>如果D与上游节点相等，Z必须保留来自D的MP2MP-D Label Mapping ，但不能更新转发表项。</p>
+</blockquote>
+<p>Node Z checks if upstream LSR U already assigned a label Lu to . If not, transit node Z waits until it receives an MP2MP-U Label Mapping from LSR U (see Section 3.3.1.3). Once the MP2MP-U Label Mapping is received from LSR U, node Z checks whether it already has forwarding state upstream . If it does, then no further action needs to happen. If it does not, it allocates a label Lu’ and creates a new label swap for Lu’ with label Lu over interface Iu. Interface Iu is determined via the procedures in Section 2.4.1.2. In addition, it also adds the label swap(s) from the forwarding state downstream , omitting the swap on interface I for node D. The swap on interface I for node D is omitted to prevent a packet originated by D to be forwarded back to D.</p>
+<blockquote>
+<p>Z检查是否收到过上游的标签Lu。如果没有，Z等待直到收到上游节点U的MP2MP-U Label Mapping 消息。一旦收到该消息，Z检查是否已经建好流量向上的LSP，如果已经建好则忽略该消息。如果没建好则分配标签Lu’并更新转发表项。</p>
+</blockquote>
+<p>Node Z determines the downstream MP2MP LSR as per Section 3.3.1.2, and sends an MP2MP-U Label Mapping <x, y,="" lu’=""> to node D.</x,></p>
+<blockquote>
+<p>节点Z给<strong>每一个</strong>下游D发送MP2MP-U Label Mapping <x, y,="" lu’="">消息。</x,></p>
+</blockquote>
+<h5 id="3-3-1-6-MP2MP-Root-Node-Operation"><a href="#3-3-1-6-MP2MP-Root-Node-Operation" class="headerlink" title="3.3.1.6. MP2MP Root Node Operation"></a>3.3.1.6. MP2MP Root Node Operation</h5><h5 id="3-3-1-6-1-Root-Node-Is-Also-a-Leaf"><a href="#3-3-1-6-1-Root-Node-Is-Also-a-Leaf" class="headerlink" title="3.3.1.6.1. Root Node Is Also a Leaf"></a>3.3.1.6.1. Root Node Is Also a Leaf</h5><p>Suppose root/leaf node Z receives an MP2MP-D Label Mapping from node D. Z checks whether it already has forwarding state downstream . If not, Z creates downstream forwarding state to push label L on traffic that Z wants to forward down the MP2MP LSP. How it determines what traffic to forward on this MP2MP LSP is outside the scope of this document. If Z already has forwarding state for downstream , then Z will add the label push for L over interface I to it. Interface I is determined via the procedures in Section 2.4.1.2.</p>
+<blockquote>
+<p>假如节点Z（即是Root也是Leaf）收到了下游的MP2MP-D Label Mapping 消息，Z检查是否已经建好流量向下的LSP。如果没有，Z建立相应转发状态为了之后给想要进入MP2MP域的流量push标签，Z如何决定要发送的流量超出了本文的范围。如果已经建好，则更新转发状态增加一条流量向下的LSP。</p>
+</blockquote>
+<p>Node Z checks if it has forwarding state for upstream . If not, Z allocates a label Lu’ and creates upstream forwarding state to swap Lu’ with the label swap(s) from the forwarding state downstream , except the swap on interface I for node D. This allows upstream traffic to go down the MP2MP to other node(s), except the node from which the traffic was received. Node Z determines the downstream MP2MP LSR as per section Section 3.3.1.2, and sends an MP2MP-U Label Mapping <x, y,="" lu’=""> to node D. Since Z is the root of the tree, Z will not send an MP2MP-D Label Mapping and will not receive an MP2MP-U Label Mapping.</x,></p>
+<blockquote>
+<p>Z检查是否建好流量向上的LSP。如果没有分配标签Lu’并建立相应转发表项。这使得上行流量到达Root节点后可以通过Root节点转到其它流量向下的LSP的同时剔除流量到达的那路LSP。然后Z给每个下游发送MP2MP-U Label Mapping <x, y,="" lu’="">消息。因为Z节点是根，Z不会发送MP2MP-D Label Mapping消息，也不会受到MP2MP-U Label Mapping消息。</x,></p>
+</blockquote>
+<h5 id="3-3-1-6-2-Root-Node-is-Not-a-Leaf"><a href="#3-3-1-6-2-Root-Node-is-Not-a-Leaf" class="headerlink" title="3.3.1.6.2. Root Node is Not a Leaf"></a>3.3.1.6.2. Root Node is Not a Leaf</h5><p>Suppose the root node Z receives an MP2MP-D Label Mapping from node D. Z checks whether it already has forwarding state for downstream . If not, Z creates downstream forwarding state and installs a outgoing label L over interface I. Interface I is determined via the procedures in Section 2.4.1.2. If Z already has forwarding state for downstream , then Z will add label L over interface I to the existing state.</p>
+<blockquote>
+<p>假设Z收到来自D的MP2MP-D Label Mapping 消息。Z检查是否已建好流量向下的LSP，若没有则建立相应转发表项（也即建LSP），若已经建好则更新转发表项增加一个下游LSP分支。</p>
+</blockquote>
+<p>Node Z checks if it has forwarding state for upstream . If not, Z allocates a label Lu’ and creates forwarding state to swap Lu’ with the label swap(s) from the forwarding state downstream , except the swap for node D. This allows upstream traffic to go down the MP2MP to other node(s), except the node from which it was received. Root node Z determines the downstream MP2MP LSR D as per Section 3.3.1.2, and sends an MP2MP-U Label Mapping <x, y,="" lu’=""> to it. Since Z is the root of the tree, Z will not send an MP2MP-D Label Mapping and will not receive an MP2MP-U Label Mapping.</x,></p>
+<blockquote>
+<p>Z检查是否建好流量向上的LSP。如果没有分配标签Lu’并建立相应转发表项。这使得上行流量到达Root节点后可以通过Root节点转到其它流量向下的LSP的同时剔除流量到达的那路LSP。然后Z给每个下游发送MP2MP-U Label Mapping <x, y,="" lu’="">消息。因为Z节点是根，Z不会发送MP2MP-D Label Mapping消息，也不会受到MP2MP-U Label Mapping消息。</x,></p>
+</blockquote>
+<h4 id="3-3-2-MP2MP-Label-Withdraw"><a href="#3-3-2-MP2MP-Label-Withdraw" class="headerlink" title="3.3.2. MP2MP Label Withdraw"></a>3.3.2. MP2MP Label Withdraw</h4><p>The following section lists procedures for generating and processing MP2MP Label Withdraw messages for nodes that participate in an MP2MP LSP. An LSR should apply those procedures that apply to it, based on its role in the MP2MP LSP.</p>
+<blockquote>
+<p>接下来的部分介绍参与建立MP2MP LSP的节点如何处理MP2MP Label Withdraw消息。节点根据自身在MP2MP LSP中的角色来处理MP2MP Label Withdraw消息。</p>
+</blockquote>
+<h5 id="3-3-2-1-MP2MP-Leaf-Operation"><a href="#3-3-2-1-MP2MP-Leaf-Operation" class="headerlink" title="3.3.2.1. MP2MP Leaf Operation"></a>3.3.2.1. MP2MP Leaf Operation</h5><p>If a leaf node Z discovers (by means outside the scope of this document) that it has no downstream neighbors in that LSP and that it has no need to be an Egress LSR for that LSP (by means outside the scope of this document), then it SHOULD send an MP2MP-D Label Withdraw to its upstream LSR U for , where L is the label it had previously advertised to U for . Leaf node Z will also send an unsolicited label release to U to indicate that the upstream path is no longer used and that label Lu can be removed.</p>
+<blockquote>
+<p>Leaf节点Z发现自己没有下游邻居并且不再需要成为Egress节点时，Z节点[应该]发送向自己的上游节点U发送MP2MP-D Label Withdraw 消息，其中的L是此前向U发送的Mapping消息中的标签。同时Z也向U发送label release 消息表明上游路径已经不再会使用了，而Lu标签可以回收了。</p>
+</blockquote>
+<p>Leaf node Z expects the upstream router U to respond by sending a downstream label release for L.</p>
+<blockquote>
+<p>节点Z期望收到上游节点U的Release回复。（该Release消息是向U发送的Withdraw消息的回应）</p>
+</blockquote>
+<h5 id="3-3-2-2-MP2MP-Transit-Node-Operation"><a href="#3-3-2-2-MP2MP-Transit-Node-Operation" class="headerlink" title="3.3.2.2. MP2MP Transit Node Operation"></a>3.3.2.2. MP2MP Transit Node Operation</h5><p>If a transit node Z receives an MP2MP-D Label Withdraw message from node D, it deletes label L from its forwarding state downstream and from all its upstream states for . Node Z sends an MP2MP-D Label Release message with label L to D. Since node D is no longer part of the downstream forwarding state, Z cleans up the forwarding state upstream . There is no need to send an MP2MP-U Label Withdraw to D because node D already removed Lu and sent a label release for Lu to Z.</p>
+<blockquote>
+<p>如果Transit节点Z从下游节点D收到Withdraw消息，Z删除为流量向下的LSP分配的标签L并更新转发状态。然后Z向下游D回复Release消息。（Withdraw中带有D给Z发送的Mapping消息中的标签L）</p>
+<p>此时，因为D已经不存在于Z的下游转发状态中，Z清除了与upstream 有关的转发状态。Z不需要向D发送MP2MP-U Label Withdraw 因为D已经移除了标签Lu并发送了有关Lu的release给Z。</p>
+</blockquote>
+<p>If deleting L from Z’s forwarding state for downstream results in no state remaining for , then Z propagates the MP2MP-D Label Withdraw to its upstream node U for and will also send an unsolicited MP2MP-U Label Release to U to indicate that the upstream path is no longer used and that label Lu can be removed.</p>
+<blockquote>
+<p>如果删除下游导致Z没有生育的下游，Z向上游U发送D-Withdraw和U-Release撤回标签L表明上游路径不再使用且Z可以移除标签Lu（Lu是U为了建立流量向上的LSP而给Z发送的U-Mapping中所带的标签）。</p>
+</blockquote>
+<h5 id="3-3-2-3-MP2MP-Root-Node-Operation"><a href="#3-3-2-3-MP2MP-Root-Node-Operation" class="headerlink" title="3.3.2.3. MP2MP Root Node Operation"></a>3.3.2.3. MP2MP Root Node Operation</h5><p>When the root node of an MP2MP LSP receives an MP2MP-D Label Withdraw message, the procedure is the same as that for transit nodes, except that the root node will not propagate the Label Withdraw upstream (as it has no upstream).</p>
+<blockquote>
+<p>Root节点收到D-Withdraw消息的操作与Transit节点相同，除了Root节点不会再向上游发送Withdraw（因为Root没有上游）。</p>
+</blockquote>
+<h4 id="3-3-3-MP2MP-Upstream-LSR-Change"><a href="#3-3-3-MP2MP-Upstream-LSR-Change" class="headerlink" title="3.3.3. MP2MP Upstream LSR Change"></a>3.3.3. MP2MP Upstream LSR Change</h4><p>The procedure for changing the upstream LSR is the same as documented in Section 2.4.3, except it is applied to MP2MP FECs, using the procedures described in Section 3.3.1 through Section 3.3.2.3.</p>
+<blockquote>
+<p>上游切换的过程与2.4.3节中的相同，使用3.3.1节和3.3.2.3.节中的方法，除了这里使用的是MP2MP FEC（而不是P2MP）。</p>
+</blockquote>
+<h2 id="4-7-…"><a href="#4-7-…" class="headerlink" title="4. ~ 7. …"></a>4. ~ 7. …</h2><h2 id="8-Make-Before-Break-MBB"><a href="#8-Make-Before-Break-MBB" class="headerlink" title="8. Make Before Break (MBB)"></a>8. Make Before Break (MBB)</h2><p>An LSR selects the LSR that is its next hop to the root of the LSP as its upstream LSR for an MP LSP. When the best path to reach the root changes, the LSR must choose a new upstream LSR. Sections 2.4.3 and 3.3.3 describe these procedures.</p>
+<blockquote>
+<p>LSR选下一跳的依据是通往root的最佳路由，路由改变引起最佳路径改变，此时LSR必须选择出一个新上游。</p>
+</blockquote>
+<p>When the best path to the root changes, the LSP may be broken temporarily resulting in packet loss until the LSP “reconverges” to a new upstream LSR. The goal of MBB when this happens is to keep the duration of packet loss as short as possible. In addition, there are scenarios where the best path from the LSR to the root changes but the LSP continues to forward packets to the previous next hop to the root. That may occur when a link comes up or routing metrics change. In such a case, a new LSP should be established before the old LSP is removed to limit the duration of packet loss. The procedures described below deal with both scenarios in a way that an LSR does not need to know which of the events described above caused its upstream router for an MBB LSP to change.</p>
+<blockquote>
+<p>当到root的最佳路径发生变化时，LSP可能会暂时中断，导致数据包丢失，直到LSP“重新收敛”到新的上游LSR。MBB的目标是在这种情况发生时尽可能缩短数据包丢失的持续时间。 此外，在某些情况下，从LSR到根的最佳路径会发生变化，但LSP会继续将数据包转发到原来的下一跳。当链接出现或路由指标发生变化时，可能会发生这种情况。 在这种情况下，应该在删除旧LSP之前建立新的LSP，以限制丢包的持续时间。 下面描述的过程中，LSR不感知导致上游路由器变化的原因。</p>
+</blockquote>
+<p>The MBB procedures are an optional extension to the MP LSP building procedures described in this document. The procedures in this section offer a make-before-break behavior, except in cases where the new path is part of a transient routing loop involving more than 2 LSRs (also see Section 4).</p>
+<blockquote>
+<p>MBB过程是LSP构建过程中的可选扩展。 本节提供了一种make-before-break（先接后断）的行为。</p>
+</blockquote>
+<h3 id="8-1-MBB-Overview"><a href="#8-1-MBB-Overview" class="headerlink" title="8.1. MBB Overview"></a>8.1. MBB Overview</h3><p>The MBB procedures use additional LDP signaling.</p>
+<blockquote>
+<p>MBB过程使用LDP的扩展信令。</p>
+</blockquote>
+<p>Suppose some event causes a downstream LSR-D to select a new upstream LSR-U for FEC-A. The new LSR-U may already be forwarding packets for FEC-A; that is, to downstream LSRs other than LSR-D. After LSR-U receives a label for FEC-A from LSR-D, it will notify LSR-D when it knows that the LSP for FEC-A has been established from the root to itself. When LSR-D receives this MBB notification, it will change its next hop for the LSP root to LSR-U.</p>
+<blockquote>
+<p>假设某个事件导致下游LSR-D为FEC-A选择新的上游LSR-U。新的LSR-U可能已建好上下游LSP并为LSR-D以外的下游LSR转发数据包。在LSR-U从LSR-D收到FEC-A的标签后，当LSR-U知道FEC-A的LSP已经从根建立到自身时，LSR-U将通知LSR-D。当LSR-D收到此MBB notification时，它会将LSP根的下一跳更改为LSR-U。</p>
+</blockquote>
+<p>The assumption is that if LSR-U has received an MBB notification from its upstream router for the FEC-A LSP and has installed forwarding state, the LSR is capable of forwarding packets on the LSP. At that point LSR-U should signal LSR D by means of an MBB notification that it has become part of the tree identified by FEC-A and that LSR-D should initiate its switchover to the LSP.</p>
+<blockquote>
+<p>假设如果LSR-U已经从其上游路由器接收到针对FEC-A LSP的MBB notification且已经建立了转发状态，则LSR能够在LSP上转发分组。此时，LSR-U应通过MBB notification向LSR D发信号通知它已成为FEC-A识别的树的一部分，并且LSR-D应该开始切换到LSP。</p>
+</blockquote>
+<p>At LSR-U, the LSP for FEC-A may be in 1 of 3 states.</p>
+<ol>
+<li>There is no state for FEC-A.</li>
+<li>State for FEC-A exists and LSR-U is waiting for MBB notification<br>that the LSP from the root to it exists.</li>
+<li>State for FEC-A exists and the MBB notification has been received<br>or it is the root node for FEC-A.<blockquote>
+<p>LSR-U关于FEC-A有以下3中状态：</p>
+<p>1.LSR-U不属于FEC-A。</p>
+<p>2.LSR-U属于FEC-A，且LSR-U在等待MBB notification。</p>
+<p>3.LSR-U属于FEC-A，且LSR-U已经收到过MBB notification，或LSR-U自己就是FEC-A的root。</p>
+</blockquote>
+</li>
+</ol>
+<p>After LSR-U receives LSR-D’s Label Mapping message for FEC-A, LSR-U MUST NOT reply with an MBB notification to LSR-D until its state for the LSP is state #3 above. If the state of the LSP at LSR-U is state from LSR-D while waiting for an MBB notification from its upstream LSR for the LSP. When LSR-U receives the MBB notification from LSRU, it transitions to LSP state #3 and sends an MBB notification to LSR-D.</p>
+<blockquote>
+<p>在LSR-U收到LSR-D的标签映射消息后，如果LSR-U不处于上述的状态#3，绝不能回复到LSR-D的MBB notification（如果处于状态#3则直接回复MBB notification）。如果LSR-U的LSP状态是LSR-D的状态，则等待来自其上游LSR的LSP的MBB notification。当LSR-U收到来自LSR-U的MBB notification时，它转换到LSP状态＃3并向LSR-D发送MBB notification。</p>
+</blockquote>
+<h3 id="8-2-The-MBB-Status-Code"><a href="#8-2-The-MBB-Status-Code" class="headerlink" title="8.2. The MBB Status Code"></a>8.2. The MBB Status Code</h3><p>As noted in Section 8.1, the procedures for establishing an MBB MP LSP are different from those for establishing normal MP LSPs.</p>
+<blockquote>
+<p>如第8.1节所述，建立MBB MP LSP的过程与建立普通MP LSP的过程不同。</p>
+</blockquote>
+<p>When a downstream LSR sends a Label Mapping message for MP LSP to its upstream LSR, it MAY include an LDP MP Status TLV that carries an MBB Status Code to indicate that MBB procedures apply to the LSP. This new MBB Status Code MAY also appear in an LDP Notification message used by an upstream LSR to signal LSP state #3 to the downstream LSR; that is, that the upstream LSRs state for the LSP exists and that it has received notification from its upstream LSR that the LSP is in state #3.</p>
+<blockquote>
+<p>当下游LSR向其上游LSR发送MP LSP的Label Mapping消息时，它可以包含LDP MP Status TLV，其携带MBB状态码以指示MBB过程适用于LSP。 这个新的MBB状态码也可以出现在上游LSR用来向下游LSR发送LSP状态＃3信号的LDP Notification消息中; 也就是说，存在LSP的上游LSR状态，并且已经从其上游LSR接收到LSP处于状态＃3的通知。</p>
+</blockquote>
+<p>The MBB Status is a type of the LDP MP Status Value Element as<br>described in Section 5.1. It is encoded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>MBB Type</th>
+<th>Length</th>
+<th>Status Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MBB Type: Type 1</td>
+<td>Length: 1</td>
+<td>1 = MBB request(2 = MBB ack)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="8-3-The-MBB-Capability"><a href="#8-3-The-MBB-Capability" class="headerlink" title="8.3. The MBB Capability"></a>8.3. The MBB Capability</h3><p>An LSR MAY advertise that it is capable of handling MBB LSPs using the capability advertisement as defined in [RFC5561]. </p>
+<blockquote>
+<p>LSR可以使用[RFC5561]中定义的能力通告来宣传它能够处理MBB LSP。</p>
+</blockquote>
+<p>If an LSR has not advertised that it is MBB capable, its LDP peers MUST NOT send it messages that include MBB parameters. If an LSR receives a Label Mapping message with an MBB parameter from downstream LSR-D and its upstream LSR U has not advertised that it is MBB capable, the LSR MUST send an MBB notification immediately to LSR-U (see Section 8.4). If this happens, an MBB MP LSP will not be established, but a normal MP LSP will be the result.</p>
+<blockquote>
+<p>如果LSR没有宣告它具有MBB能力，则其LDP对等体不得向其发送包含MBB参数的消息。如果LSR从下游LSR-D收到带有MBB参数的Label Mapping消息，并且其上游LSR U没有通告它具有MBB能力，则LSR必须立即向LSR-U发送MBB通知（参见第8.4节）。 如果发生这种情况，将不会建立MBB MP LSP，但结果是普通的MP LSP。</p>
+</blockquote>
+<h3 id="8-4-The-MBB-Procedures"><a href="#8-4-The-MBB-Procedures" class="headerlink" title="8.4. The MBB Procedures"></a>8.4. The MBB Procedures</h3><h4 id="8-4-1-Terminology"><a href="#8-4-1-Terminology" class="headerlink" title="8.4.1. Terminology"></a>8.4.1. Terminology</h4><ol>
+<li><p>MBB LSP <x, y="">: A P2MP or MP2MP Make Before Break (MBB) LSP entry with root node address X and opaque value Y.</x,></p>
+<blockquote>
+<p>具有root地址X和opaque value值Y的P2MP或MP2MP的MBB LSP。</p>
+</blockquote>
+</li>
+<li><p>A(N, L): An accepting element that consists of an upstream neighbor N and Local label L. This LSR assigned label L to neighbor N for a specific MBB LSP. For an active element, the corresponding label is stored in the label forwarding database.</p>
+<blockquote>
+<p>A(N, L)：由上游邻居N和本地标签L组成的Accepting Element。LSR为MBB LSP向邻居N分配标签L。对于active元素，本地数据库要记录。</p>
+</blockquote>
+</li>
+<li><p>iA(N, L): An inactive accepting element that consists of an upstream neighbor N and local label L. This LSR assigned label L to neighbor N for a specific MBB LSP. For an inactive element,the corresponding label is not stored in the label forwarding database.</p>
+<blockquote>
+<p>iA(N, L)：由邻居N标签L组成的inactive Accepting Element。LSR为MBB LSP向邻居N分配标签L。对于inactive元素，本地数据库不记录。</p>
+</blockquote>
+</li>
+<li><p>F(N, L): A Forwarding state that consists of downstream neighbor N and inactive label L. This LSR is sending label packets with label L to neighbor N for a specific FEC.</p>
+<blockquote>
+<p>F(N, L)：由下游邻居N和inactive标签L组成的转发状态。该LSR正在向特定FEC的邻居N发送带有标签L的标签分组。</p>
+</blockquote>
+</li>
+<li><p>F’(N, L): A Forwarding state that has been marked for sending an MBB Notification message to neighbor N with label L.</p>
+<blockquote>
+<p>F’(N, L)：已标记为使用标签L向邻居N发送MBB通知消息的转发状态。</p>
+</blockquote>
+</li>
+<li><p>MBB Notification <x, y,="" l="">: An LDP notification message with an MP LSP <x, y="">, label L, and MBB Status code 2.</x,></x,></p>
+<blockquote>
+<p>MBB Notification <x, y,="" l="">：带有标签L、状态码2的LDP notification消息。</x,></p>
+</blockquote>
+</li>
+<li><p>MBB Label Mapping <x, y,="" l="">: A MP2MP Label Mapping downstream with a FEC element <x, y="">, label L, and MBB Status code 1.</x,></x,></p>
+<blockquote>
+<p>MBB Label Mapping <x, y,="" l="">：带有FEC element <x, y="">、标签L、状态码1的MP2MP MBB标签映射消息。</x,></x,></p>
+</blockquote>
+</li>
+</ol>
+<h4 id="8-4-2-Accepting-Elements"><a href="#8-4-2-Accepting-Elements" class="headerlink" title="8.4.2. Accepting Elements"></a>8.4.2. Accepting Elements</h4><p>An accepting element represents a specific label value L that has been advertised to a neighbor N for an MBB LSP <x, y=""> and is a candidate for accepting labels switched packets on. An LSR can have two accepting elements for a specific MBB LSP <x, y=""> LSP, only one of them MUST be active. </x,></x,></p>
+<p>An active element is the element for which the label value has been installed in the label forwarding database. An inactive accepting element is created after a new upstream LSR is chosen and replacement the active element in the label forwarding database is pending. </p>
+<p>Inactive elements only exist temporarily while switching to a new upstream LSR. Once the switch has been completed, only one active element remains. During network convergence, it is possible that an inactive accepting element is created while another inactive accepting element is pending. If that happens, the older inactive accepting element MUST be replaced with a newer inactive element. </p>
+<p>If an accepting element is removed, a Label Withdraw has to be sent for label L to neighbor N for <x, y="">.</x,></p>
+<blockquote>
+<p>Accepting Element表示已经通告给邻居N的用于MBB LSP <x, y="">的特定标签值L，并且是用于接受标签交换分组的候选者。对于特定的MBB LSP <x，y> LSP，一个LSR对一个特定的MBB LSP <x, y="">可以有两个Accepting Element，其中有且仅有一个必须是活动的。</x,></x，y></x,></p>
+<p>活动元素是其标签值已下表的元素。inactive accepting element是LSR选出新上游后为新上游创建并为替换老的活动元素创建的。</p>
+<p>inactive accepting element仅在切换到新的上游LSR时临时存在。一旦切换完成，只有活动元素被保留。在网络收敛期间，有可能出现一个inactive accepting element被创建的时产生另一个inactive accepting element。如果发生这种情况，必须用较新的inactive accepting element替换较旧的inactive accepting element。如果删除了Accepting Element，则必须为标签L的删除发送Withdraw给邻居N.</p>
+</blockquote>
+<h4 id="8-4-3-Procedures-for-Upstream-LSR-Change"><a href="#8-4-3-Procedures-for-Upstream-LSR-Change" class="headerlink" title="8.4.3. Procedures for Upstream LSR Change"></a>8.4.3. Procedures for Upstream LSR Change</h4><p>Suppose a node Z has an MBB LSP <x, y=""> with an active accepting element A(N1, L1). Due to a routing change, it detects a new best path for root X and selects a new upstream LSR N2. Node Z allocates a new local label L2 and creates an inactive accepting element iA(N2, L2). Node Z sends MBB Label Mapping <x, y,="" l2=""> to N2 and waits for the new upstream LSR N2 to respond with an MBB Notification for <x, y,="" l2="">. During this transition phase, there are two accepting elements, the element A(N1, L1) still accepting packets from N1 over label L1 and the new inactive element iA(N2, L2).</x,></x,></x,></p>
+<blockquote>
+<p>假设节点Z具有MBB LSP <x，y>，其具有有效接受元件A（N1，L1）。由于路由改变，它检测到根X的新的最佳路径并选择新的上游LSR N2。节点Z分配新的本地标签L2并创建不活动的接受元素iA（N2，L2）。节点Z将MBB标签映射<x，y，l2>发送到N2，并等待新的上游LSR N2响应<x，y，l2>的MBB通知。在该过渡阶段期间，存在两个接受元素，元素A（N1，L1）仍然接受来自标记L1上的N1的分组和新的非活动元素iA（N2，L2）。</x，y，l2></x，y，l2></x，y></p>
+</blockquote>
+<p>While waiting for the MBB Notification from upstream LSR N2, it is possible that another transition occurs due to a routing change. Suppose the new upstream LSR is N3. An inactive element iA(N3, L3) is created and the old inactive element iA(N2, L2) MUST be removed. A Label Withdraw MUST be sent to N2 for <x, y,="" l2="">. The MBB Notification for <x, y,="" l2=""> from N2 will be ignored because the inactive element is removed.</x,></x,></p>
+<blockquote>
+<p>在等待来自上游LSR N2的MBB通知时，可能由于路由改变而发生另一个转换。假设新的上游LSR是N3。创建非活动元素iA（N3，L3），并且必须移除旧的非活动元素iA（N2，L2）。必须将标签提取发送到N2以获取<x，y，l2>。将忽略来自N2的<x，y，l2>的MBB通知，因为移除了非活动元素。</x，y，l2></x，y，l2></p>
+</blockquote>
+<p>It is possible that the MBB Notification from upstream LSR is never received due to link or node failure. To prevent waiting indefinitely for the MBB Notification, a timeout SHOULD be applied. As soon as the timer expires, the procedures in Section 8.4.5 are applied as if an MBB Notification was received for the inactive element. If a downstream LSR detects that the old upstream LSR went down while waiting for the MBB Notification from the new upstream LSR, the downstream LSR can immediately proceed without waiting for the timer to expire.</p>
+<blockquote>
+<p>由于链路或节点故障，从未接收到来自上游LSR的MBB通知。为了防止无限期地等待MBB通知，应该应用超时。一旦计时器到期，就会应用第8.4.5节中的过程，就像收到非活动元素的MBB通知一样。如果下游LSR在等待来自新上游LSR的MBB通知时检测到旧的上游LSR发生故障，则下游LSR可以立即继续而不等待定时器到期。</p>
+</blockquote>
+</div><div class="tags"><a href="/tags/网络/">网络</a><a href="/tags/MP2MP/">MP2MP</a></div><div class="post-nav"><a href="/2018/08/24/《Java设计模式》/" class="next">Java设计模式</a></div><div id="comments"></div></div></div></div><div class="layout-r"><div id="sidebar"><div class="widget"><div id="search-form"><div id="result-mask" class="hide"></div><label><input id="search-key" type="text" autocomplete="off" placeholder="请输入关键字..."/></label><div id="result-wrap" class="hide"><div id="search-result"></div></div><div class="hide"><template id="search-tpl"><div class="item"><a href="/{path}" title="{title}"><div class="title">{title}</div><div class="time">{date}</div><div class="tags">{tags}</div></a></div></template></div></div></div><div class="widget"><div class="widget-title"><i class="fa fa-gui"> Kategorien</i></div><ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Java/">Java</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/JavaScript/">JavaScript</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/LeetCode/">LeetCode</a><span class="category-list-count">29</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MP2MP/">MP2MP</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/排序算法/">排序算法</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/数据库/">数据库</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/杂文/">杂文</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/编程经验/">编程经验</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/网络/">网络</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/面试/">面试</a><span class="category-list-count">1</span></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-biao"> Tags</i></div><div class="tagcloud"><a href="/tags/图/" style="font-size: 15px;">图</a> <a href="/tags/C/" style="font-size: 15px;">C++</a> <a href="/tags/协议/" style="font-size: 15px;">协议</a> <a href="/tags/网络/" style="font-size: 15px;">网络</a> <a href="/tags/JavaScript/" style="font-size: 15px;">JavaScript</a> <a href="/tags/作用域/" style="font-size: 15px;">作用域</a> <a href="/tags/Java/" style="font-size: 15px;">Java</a> <a href="/tags/泛型/" style="font-size: 15px;">泛型</a> <a href="/tags/面试/" style="font-size: 15px;">面试</a> <a href="/tags/LeetCode/" style="font-size: 15px;">LeetCode</a> <a href="/tags/二叉树/" style="font-size: 15px;">二叉树</a> <a href="/tags/链表/" style="font-size: 15px;">链表</a> <a href="/tags/栈/" style="font-size: 15px;">栈</a> <a href="/tags/搜索/" style="font-size: 15px;">搜索</a> <a href="/tags/HTTP/" style="font-size: 15px;">HTTP</a> <a href="/tags/位运算/" style="font-size: 15px;">位运算</a> <a href="/tags/DP/" style="font-size: 15px;">DP</a> <a href="/tags/快速幂/" style="font-size: 15px;">快速幂</a> <a href="/tags/字符串/" style="font-size: 15px;">字符串</a> <a href="/tags/数组/" style="font-size: 15px;">数组</a> <a href="/tags/Linux/" style="font-size: 15px;">Linux</a> <a href="/tags/MP2MP/" style="font-size: 15px;">MP2MP</a> <a href="/tags/TCP-IP详解/" style="font-size: 15px;">TCP/IP详解</a> <a href="/tags/quagga/" style="font-size: 15px;">quagga</a> <a href="/tags/ldp/" style="font-size: 15px;">ldp</a> <a href="/tags/算法/" style="font-size: 15px;">算法</a> <a href="/tags/编程经验/" style="font-size: 15px;">编程经验</a> <a href="/tags/经验/" style="font-size: 15px;">经验</a> <a href="/tags/数据库/" style="font-size: 15px;">数据库</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-fei"> Archiv</i></div><ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">October 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">August 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">July 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">January 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">November 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/10/">October 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">June 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">May 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">April 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">March 2017</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-xie"> Letzte</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/10/14/《RFC6388》MP2MP部分的理解翻译/">《RFC6388》部分理解翻译</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/08/24/《Java设计模式》/">Java设计模式</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/07/04/《Effective Java》整理/">《Effective Java》整理</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/04/18/Java语法点/">Java语法点</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/04/18/Java面试点/">Java面试点</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/04/18/面试问题整理（Java方向）/">面试问题整理（Java方向）</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/04/12/C++中local static对象与non-local static对象的概念与区别/">C++中local static对象与non-local static对象的概念与区别</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/04/09/《Effective C++》整理/">《Effective C++》整理</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/03/17/数据库基础概念/">数据库基础概念</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/03/14/排序算法经典实现/">排序算法经典实现</a></li></ul></div></div></div></div><a id="totop" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.3.0" async></script><div id="footer"><div class="footer-info"><p><a href="/baidusitemap.xml">网站地图</a> |<a href="/atom.xml">订阅本站</a> |<span>联系博主：<a href="mailto:null" target="_blank" class="fa fa-email"> </a><a href="null" target="_blank" class="fa fa-weibo"></a><a href="null" target="_blank" class="fa fa-github"> </a></span></p><p><span> Copyright &copy;<a href="/." rel="nofollow">John Doe</a></span><span> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a></span><span><a rel="nofollow" target="_blank" href="https://github.com/chaooo/hexo-theme-BlueLake"> Theme </a>by<a rel="nofollow" target="_blank" href="https://github.com/chaooo"> Charles.</a></span></p></div></div></div><script type="text/javascript" src="/js/search.json.js?v=1.3.0"></script></body></html>
